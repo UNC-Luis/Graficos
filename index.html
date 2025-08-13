@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análisis Estadístico - CAIU 2025-I</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -169,7 +170,7 @@
         </div>
 
         <div class="chart-container large-chart">
-            <h3>👥 Distribución de Estudiantes por Estado</h3>
+            <h3>👥 Distribución de Estudiantes por Estado Académico</h3>
             <div class="chart-wrapper">
                 <canvas id="distributionChart"></canvas>
             </div>
@@ -205,6 +206,9 @@
     </div>
 
     <script>
+        // Register the ChartDataLabels plugin
+        Chart.register(ChartDataLabels);
+
         // Data from the university analysis
         const moduleData = {
             'Habilidades Lingüísticas': {
@@ -244,9 +248,9 @@
                 dropoutRate: 13.47
             },
             'Lenguaje Lógico Matemático': {
-                totalStudents: 492, // Calculated: 410 (approved) + 41 (attendedFailed) + 41 (absent)
+                totalStudents: 492,
                 approved: 410,
-                failed: 82, // Reprobados = Inasistentes + Asistentes Reprobados
+                failed: 82,
                 absent: 41,
                 attendedFailed: 41,
                 attended: 451,
@@ -290,13 +294,18 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (context) => `${context.parsed.y.toFixed(2)}%`
                         }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value) => `${value.toFixed(2)}%`,
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 },
                 scales: {
@@ -316,7 +325,7 @@
             }
         });
 
-        // 2. Dropout Rates (Bar Chart)
+        // 2. Dropout Rates (Bar Chart with Module Colors)
         const dropoutCtx = document.getElementById('dropoutChart').getContext('2d');
         new Chart(dropoutCtx, {
             type: 'bar',
@@ -325,8 +334,8 @@
                 datasets: [{
                     label: 'Tasa de Deserción (%)',
                     data: modules.map(mod => moduleData[mod].dropoutRate),
-                    backgroundColor: '#e53e3e',
-                    borderColor: '#e53e3edd',
+                    backgroundColor: colors,
+                    borderColor: colors.map(color => color + 'dd'),
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false
@@ -336,13 +345,18 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (context) => `${context.parsed.y.toFixed(2)}%`
                         }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (value) => `${value.toFixed(2)}%`,
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 },
                 scales: {
@@ -383,14 +397,17 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
+                    legend: { display: false },
+                    datalabels: {
+                        formatter: (value) => `${value.toFixed(2)}`,
+                        font: { size: 12, weight: 'bold' },
+                        color: '#333'
                     }
                 },
                 scales: {
                     r: {
                         beginAtZero: true,
-                        max: 4, // Adjusted for new stdDev of 3.38
+                        max: 4,
                         ticks: {
                             stepSize: 0.5
                         }
@@ -429,6 +446,28 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const total = moduleData[modules[context.dataIndex]].totalStudents;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: { size: 12, weight: 'bold' },
+                        color: '#333',
+                        anchor: 'center',
+                        align: 'center'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: (context) => {
+                                const total = moduleData[modules[context.dataIndex]].totalStudents;
+                                const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+                                return `${percentage}% del total`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         stacked: true,
@@ -439,17 +478,6 @@
                     y: {
                         stacked: true,
                         beginAtZero: true
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            afterLabel: (context) => {
-                                const total = moduleData[modules[context.dataIndex]].totalStudents;
-                                const percentage = ((context.parsed.y / total) * 100).toFixed(1);
-                                return `${percentage}% del total`;
-                            }
-                        }
                     }
                 }
             }
@@ -491,6 +519,15 @@
                                 return `${context.label}: ${context.parsed} (${percentage}%)`;
                             }
                         }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const total = moduleData['Habilidades Lingüísticas'].totalStudents;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 }
             }
@@ -532,6 +569,15 @@
                                 return `${context.label}: ${context.parsed} (${percentage}%)`;
                             }
                         }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const total = moduleData['Filosofía de las Ciencias'].totalStudents;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 }
             }
@@ -573,6 +619,15 @@
                                 return `${context.label}: ${context.parsed} (${percentage}%)`;
                             }
                         }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const total = moduleData['Herramientas Tecnológicas'].totalStudents;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 }
             }
@@ -614,6 +669,15 @@
                                 return `${context.label}: ${context.parsed} (${percentage}%)`;
                             }
                         }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            const total = moduleData['Lenguaje Lógico Matemático'].totalStudents;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: { size: 14, weight: 'bold' },
+                        color: '#333'
                     }
                 }
             }
